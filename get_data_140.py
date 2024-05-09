@@ -203,17 +203,15 @@ def get_latest_start_datetime(minutes):
     return datetime.datetime.fromtimestamp(timestamp - timestamp % second - second)
 
 def get_data_140_job(host:str, minutes:int):
-    start_datetime = datetime.datetime.strptime("2024-04-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-    end_datetime = datetime.datetime.strptime("2024-04-01 03:00:00", "%Y-%m-%d %H:%M:%S")
+    start_datetime = datetime.datetime.strptime("2024-04-01 03:00:00", "%Y-%m-%d %H:%M:%S")
+    end_datetime = datetime.datetime.strptime("2024-05-01 00:00:00", "%Y-%m-%d %H:%M:%S")
     my_clickhouse = MyClickhouse()
     with open("log.log","a") as f:
         while start_datetime < end_datetime:
             try:
-                start_datetime = get_latest_start_datetime(minutes=minutes)
-                
                 # netflow服务
                 data_clickhouse = netflow_service(host=host, start_datetime=start_datetime, minutes=minutes, log_path="path", my_clickhouse=my_clickhouse)
-                f.write("{start_datetime},{len}\n".format(start_datetime=start_datetime, len=len(data_clickhouse)))
+                print("{start_datetime},{len}\n".format(start_datetime=start_datetime, len=len(data_clickhouse)))
             except Exception as ex:
                 f.write("########## error{start_datetime},{host},{ex}, {detail}\n".format(start_datetime=start_datetime, host=host, ex=ex, detail=traceback.format_exc()))
             start_datetime = start_datetime + datetime.timedelta(minutes=5)
@@ -243,12 +241,12 @@ def creat_netflow_table(host):
             )\
             ENGINE MergeTree \
             ORDER BY start \
-            TTL start + INTERVAL 1 MONTH\
             ")
     myclickhouse.close_conn()
 if __name__ == '__main__':
     creat_netflow_table("223.193.36.79:7140")
     get_data_140_job("223.193.36.79:7140", 5)
+    # MyClickhouse().get_conn()
 
 # self.conn = clickhouse_connect.get_client(host=, username='default')\
     
