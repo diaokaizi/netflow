@@ -1,0 +1,49 @@
+<clickhouse>
+    <logger>
+        <level>debug</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+        <size>1000M</size>
+        <count>3</count>
+    </logger>
+    <display_name>cluster_1S_2R node 1</display_name>
+    <listen_host>0.0.0.0</listen_host>
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+    <macros>
+        <shard>01</shard>
+        <replica>01</replica><!-- replica的编号，这里是 -->
+        <cluster>cluster_1S_2R</cluster>
+    </macros>
+    <remote_servers replace="true">
+        <cluster_1S_2R>
+            <secret>mysecretphrase</secret>
+            <shard>
+                <internal_replication>true</internal_replication>
+                <replica>
+                    <host>223.193.36.157</host><!-- 需要替换 -->
+                    <port>9000</port>
+                </replica>
+                <replica>
+                    <host>223.193.36.52</host><!-- 需要替换 -->
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </cluster_1S_2R>
+    </remote_servers>
+    <zookeeper>
+        <!-- where are the ZK nodes -->
+        <node>
+            <host>223.193.36.225</host><!-- 需要替换 -->
+            <port>9181</port>
+        </node>
+        <node>
+            <host>223.193.36.226</host><!-- 需要替换 -->
+            <port>9181</port>
+        </node>
+        <node>
+            <host>223.193.36.227</host><!-- 需要替换 -->
+            <port>9181</port>
+        </node>
+    </zookeeper>
+</clickhouse>
