@@ -6,9 +6,9 @@ clickhouse-service：
 1：223.193.36.157
 2：223.193.36.52
 clickhouse-keeper：
-1：223.193.36.224
-2：223.193.36.225
-3：223.193.36.226
+1：223.193.36.225
+2：223.193.36.226
+3：223.193.36.227
 
 tips：clickhouse-service和clickhouse-keeper不能装在同一机器上
 
@@ -16,6 +16,7 @@ tips：clickhouse-service和clickhouse-keeper不能装在同一机器上
 官方文档：https://clickhouse.com/docs/en/install
 
 1. 添加repository
+在每一个节点上（包括clickhouse-server节点和clickhouse-keeper节点）执行：
 ```
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
 curl -fsSL 'https://packages.clickhouse.com/rpm/lts/repodata/repomd.xml.key' | sudo gpg --dearmor -o /usr/share/keyrings/clickhouse-keyring.gpg
@@ -24,33 +25,40 @@ echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://package
     /etc/apt/sources.list.d/clickhouse.list
 sudo apt-get update
 ```
-2. 对于clickhouse服务节点，安装server and client
+2. 对于所有的clickhouse服务节点，安装server and client
 ```
 apt-get install -y clickhouse-server clickhouse-client
 service clickhouse-server start
 ```
-3. 对于clickhouse-keeper节点，安装clickhouse-keeper
+3. 对于所有的clickhouse-keeper节点，安装clickhouse-keeper
 ```
 sudo apt-get install -y clickhouse-keeper
 sudo systemctl enable clickhouse-keeper
 sudo systemctl start clickhouse-keeper
-sudo systemctl status clickhouse-keeper
 ```
+
+执行`sudo systemctl status clickhouse-keeper`，查看clickhouse-keeper运行状态
+
+可能遇到的错误：
 clickhouse-keeper服务启动失败，查看错误日志/var/log/clickhouse-keeper/clickhouse-keeper.err.log：
 Code: 1001, type: std::__1::__fs::filesystem::filesystem_error, e.what() = filesystem error: in create_directories: Permission denied ["/var/lib/clickhouse-keeper"]
-解决办法手动为clickhouse-keeper创建目录：
+原因是clickhouse-keeper权限不足，解决办法之一是手动为clickhouse-keeper创建目录：
 ```
 mkdir /var/lib/clickhouse-keeper /var/lib/clickhouse-keeper/preprocessed_configs
 ```
 
 #### 配置
+
 ##### 1. clickhouse-service节点配置
-所有service节点都需要执行下面操作
+
+所有clickhouse-service节点都需要执行下面操作
 
 1. 配置外网访问和集群间访问
 `vim /etc/clickhouse-server/config.xml`
 
 修改其中的listen_host和interserver_http_host
+listen_host解除注释表示允许所有外部访问
+interserver_http_host需要填写本节点的IP地址
 ```
 <listen_host>::</listen_host> <!-- 允许所有外部访问 -->
 <interserver_http_host>223.193.36.157</interserver_http_host> <!-- 以223.193.36.157节点为例，修改为自己的ip -->
@@ -60,6 +68,8 @@ mkdir /var/lib/clickhouse-keeper /var/lib/clickhouse-keeper/preprocessed_configs
 创建配置文件
 `vim /etc/clickhouse-server/config.d/replication.xml`
 以223.193.36.157上的clickhouse-service为例子，的填写的内容为（已标注需要修改的地方）：
+每一台server就填写对应的replica，每一台keeper就填写对应的zookeeper
+
 ```xml
 <clickhouse>
     <logger>
@@ -116,17 +126,22 @@ mkdir /var/lib/clickhouse-keeper /var/lib/clickhouse-keeper/preprocessed_configs
 `service clickhouse-server restart`
 检查服务状态
 `service clickhouse-server status`
-进入client
-`clickhouse client`
+
 
 
 ##### 2. clickhouse-keeper节点配置
 所有keeper节点都需要执行下面操作
 
 1. 集群配置
+
 替换keeper配置文件
-`vim /etc/clickhouse-keeper/keeper_config.xml`
+
+```
+vim /etc/clickhouse-keeper/keeper_config.xml
+```
+
 以223.193.36.224上的clickhouse-keeper为例子，的填写的内容为（已标注需要修改的地方）：
+
 ```xml
 <clickhouse>
     <logger>
@@ -167,14 +182,28 @@ mkdir /var/lib/clickhouse-keeper /var/lib/clickhouse-keeper/preprocessed_configs
     </keeper_server>
 </clickhouse>
 ```
-3. 重启生效服务
+1. 重启生效服务
+
 重启服务以生效配置
-`systemctl restart clickhouse-keeper`
+
+```
+systemctl restart clickhouse-keeper
+```
+
 检查服务状态
-`systemctl status clickhouse-keeper`
+```
+systemctl status clickhouse-keeper
+```
+
 测试keeper运行状态
-执行在keeper节点上shell执行`echo mntr | nc localhost 9181`
+执行在keeper节点上shell执行
+
+```
+echo mntr | nc localhost 9181
+```
+
 leader的响应：
 ![alt text](assets/clickhouse集群配置/image.png)
+
 follower的响应：
 ![alt text](assets/clickhouse集群配置/image-1.png)

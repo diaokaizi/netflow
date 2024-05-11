@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/root/work/jobs/service_discover.py", line 141, in <module>
+    FindTwoWayFlow().test()
+  File "/root/work/jobs/service_discover.py", line 77, in test
+    history_record = clickhouse.query(f"""
+  File "/root/work/jobs/my_clickhouse.py", line 85, in query
+    return conn.query(sql).result_rows
+  File "/usr/local/lib/python3.10/dist-packages/clickhouse_connect/driver/client.py", line 194, in query
+    return self._query_with_context(query_context)
+  File "/usr/local/lib/python3.10/dist-packages/clickhouse_connect/driver/httpclient.py", line 214, in _query_with_context
+    response = self._raw_request(body,
+  File "/usr/local/lib/python3.10/dist-packages/clickhouse_connect/driver/httpclient.py", line 438, in _raw_request
+    self._error_handler(response)
+  File "/usr/local/lib/python3.10/dist-packages/clickhouse_connect/driver/httpclient.py", line 362, in _error_handler
+    raise OperationalError(err_str) if retried else DatabaseError(err_str) from None
+clickhouse_connect.driver.exceptions.DatabaseError: :HTTPDriver for http://localhost:8123 returned response code 500)
+ Code: 75. DB::Exception: Cannot write to file /var/lib/clickhouse/tmp/tmpf2426612-a170-478e-93a6-89b52ea3eb2c: , errno: 28, strerror: No space left on device: While executing Native. (CANNOT_WRITE_TO_FILE_DESCRIPTOR) (version 24.4.1.2088 (official build))
+

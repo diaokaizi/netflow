@@ -80,7 +80,8 @@ class MyClickhouse():
     def insert(self, table, data, column_names):
         conn = self.get_conn()
         conn.insert(table=table, data=data, column_names=column_names)
-    def command(self, sql):
+    def query(self, sql):
         conn = self.get_conn()
-        return conn.command(sql)
+        return conn.query(sql).result_rows
+
 

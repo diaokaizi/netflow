@@ -1,0 +1,12 @@
+[0;40;33m[WRN][0m 2024-05-10 10:16:14 [utils.go:526] will use dirsearch moudle,but you don't provide dirsearch dicc in config.yaml
+
+[0;40;33m[WRN][0m 2024-05-10 10:17:06 [utils.go:526] will use dirsearch moudle,but you don't provide dirsearch dicc in config.yaml
+
+[0;40;33m[WRN][0m 2024-05-10 10:19:59 [utils.go:526] will use dirsearch moudle,but you don't provide dirsearch dicc in config.yaml
+
+[0;40;33m[WRN][0m 2024-05-10 10:20:51 [utils.go:526] will use dirsearch moudle,but you don't provide dirsearch dicc in config.yaml
+
+[0;40;33m[WRN][0m 2024-05-10 10:22:50 [utils.go:526] will use dirsearch moudle,but you don't provide dirsearch dicc in config.yaml
+
+[0;40;33m[WRN][0m 2024-05-10 10:22:59 [worker.go:658] get error:runtime error: index out of range [1] with length 1 on rocketmq-rce-cve-2023-33246
+
