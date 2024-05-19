@@ -29,40 +29,52 @@ class FindTwoWayFlow:
                 1.host1、2端口重复使用，host1、2表现P2P特征行为
                 1.host1、2端口频繁变化，无法判断，可能是经过NAT转换导致端口改变等导致
         """
-        clickhouse = MyClickhouse()
-        start_datetime = datetime.datetime.strptime("2024-04-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-        end_datetime = datetime.datetime.strptime("2024-04-01 01:00:00", "%Y-%m-%d %H:%M:%S")
+        ############# 配置
+        start_datetime_str = "2024-04-01 00:00:00"
+        end_datetime_str = "2024-04-01 01:00:00"
+        table_name = "netflow_140"
+        # 科技网IP
+        CSTNET_IP_ALL = ['36.254.0.0/16', '49.210.0.0/15', '60.245.128.0/17', '101.252.0.0/15', '103.2.208.0/22', 
+                '116.90.184.0/21', '116.215.0.0/16', '117.103.16.0/20', '119.78.0.0/15', '119.232.0.0/16', 
+        '119.233.0.0/17', '124.16.0.0/15', '150.242.4.0/22', '159.226.0.0/16', '202.38.128.0/23', 
+        '202.90.224.0/21', '202.122.32.0/21', '202.127.0.0/21', '202.127.16.0/20', '202.127.144.0/20', 
+        '202.127.200.0/21', '210.72.0.0/17', '210.72.128.0/19', '210.73.0.0/18', '210.75.160.0/19', 
+        '210.75.224.0/19', '210.76.192.0/19', '210.77.0.0/19', '210.77.64.0/19', '211.147.192.0/20', 
+        '211.156.64.0/20', '211.156.160.0/20', '211.167.160.0/20', '218.244.64.0/19', '223.192.0.0/15']
+
+
+
+
+        clickhouse = MyClickhouse(host="223.193.36.157")
+        start_datetime = datetime.datetime.strptime(start_datetime_str, "%Y-%m-%d %H:%M:%S")
+        end_datetime = datetime.datetime.strptime(end_datetime_str, "%Y-%m-%d %H:%M:%S")
         nmap_keys = set()
+
+        local_clickhouse =  MyClickhouse()
         while start_datetime < end_datetime:
             # 查询IP对
             row = clickhouse.query(f"""
                 SELECT
                     srcIP,
                     dstIP
-                FROM netflow_140
+                FROM {table_name}
                 WHERE (start > '{start_datetime}') AND (start < '{start_datetime + datetime.timedelta(minutes=1)}') AND (isIPv6 = 0)
             """)
             start_datetime = start_datetime + datetime.timedelta(minutes=1)
-            # 过滤重复IP对
-            keys = set()
-            row1 = []
-            for _ in row:
-                p1 = IP(_[0])
-                p2 = IP(_[1])
-                t = [p1, p2] if p1 < p2 else [p2, p1]
-                key = f"{t[0]}_{t[1]}"
-                if key not in keys:
-                    keys.add(f"{t[0]}_{t[1]}")
-                    row1.append(t)
+            p0 = IP(_[0])
+            p1 = IP(_[1])
+            ip_pair = [p0, p1] if p0 < p1 else [p1, p0]      
 
-            # 筛选IP为科技网
-            CSTNET_IP_ALL = ['36.254.0.0/16', '49.210.0.0/15', '60.245.128.0/17', '101.252.0.0/15', '103.2.208.0/22', 
-                    '116.90.184.0/21', '116.215.0.0/16', '117.103.16.0/20', '119.78.0.0/15', '119.232.0.0/16', 
-            '119.233.0.0/17', '124.16.0.0/15', '150.242.4.0/22', '159.226.0.0/16', '202.38.128.0/23', 
-            '202.90.224.0/21', '202.122.32.0/21', '202.127.0.0/21', '202.127.16.0/20', '202.127.144.0/20', 
-            '202.127.200.0/21', '210.72.0.0/17', '210.72.128.0/19', '210.73.0.0/18', '210.75.160.0/19', 
-            '210.75.224.0/19', '210.76.192.0/19', '210.77.0.0/19', '210.77.64.0/19', '211.147.192.0/20', 
-            '211.156.64.0/20', '211.156.160.0/20', '211.167.160.0/20', '218.244.64.0/19', '223.192.0.0/15']
+            local_clickhouse.query(f"""
+                SELECT
+                    srcIP,
+                    dstIP
+                FROM ip_pair
+                WHERE (p0 = '{str(p0)}') AND (p1 = '{str(p1)}')')
+            """
+            )
+
+
             cstnet_ip_set = IPSet([IP(t) for t in CSTNET_IP_ALL])
             def is_cstnet_ip(x):
                 for cstnet_ip in cstnet_ip_set:
@@ -137,8 +149,26 @@ class FindTwoWayFlow:
         # end = datetime.datetime.strptime("2024-05-01 00:00:00", "%Y-%m-%d %H:%M:%S")
 
 if __name__ == '__main__':
-
-    FindTwoWayFlow().test()
+    local_clickhouse = MyClickhouse()
+    # FindTwoWayFlow().test()
+    utcTime = datetime.datetime.now()
+    localtime = utcTime + datetime.timedelta(hours=8)
+    local_clickhouse.insert(table="ip_pair", data=[(
+        localtime, "1.1.1.1", 1, 2, 0.1, 3, "1.1.1.2", 1, 2, 0.1, 3
+     )], column_names=[
+    'start',
+    'ip0', 'ip0_most_port', 'ip0_port_count', 'ip0_port_entropy', 'ip0_is_src_count',
+    'ip1', 'ip1_most_port', 'ip1_port_count', 'ip1_port_entropy', 'ip1_is_src_count',])
+    p0 = IP("1.1.1.1")
+    p1 = IP("1.1.1.2")
+    r = local_clickhouse.query(f"""
+            SELECT
+                count(*)
+            FROM ip_pair
+            WHERE (ip0 = '{str(p0)}') AND (ip1 = '{str(p1)}')
+        """
+        )
+    print(r)
 
 
 #     MyClickhouse().command(

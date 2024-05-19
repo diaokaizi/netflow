@@ -243,10 +243,34 @@ def creat_netflow_table(host):
             ORDER BY start \
             ")
     myclickhouse.close_conn()
-if __name__ == '__main__':
-    creat_netflow_table("223.193.36.79:7140")
-    get_data_140_job("223.193.36.79:7140", 5)
-    # MyClickhouse().get_conn()
 
+def creat_ip_pair_table():
+    myclickhouse = MyClickhouse()
+    myclickhouse.command(
+        f"CREATE TABLE IF NOT EXISTS ip_pair (\
+            start DateTime('Asia/Shanghai'), \
+            ip0 String, \
+            ip0_most_port UInt16, \
+            ip0_port_count UInt16, \
+            ip0_port_entropy Float64, \
+            ip0_is_src_count UInt16, \
+            ip1 String, \
+            ip1_most_port UInt16, \
+            ip1_port_count UInt16, \
+            ip1_port_entropy Float64, \
+            ip1_is_src_count UInt16, \
+            )\
+            ENGINE MergeTree \
+            ORDER BY start \
+            SETTINGS storage_policy = 'local' \
+            ")
+    myclickhouse.close_conn()
+
+
+if __name__ == '__main__':
+    # creat_netflow_table("223.193.36.79:7140")
+    # get_data_140_job("223.193.36.79:7140", 5)
+    # MyClickhouse().get_conn()
+    creat_ip_pair_table()
 # self.conn = clickhouse_connect.get_client(host=, username='default')\
     

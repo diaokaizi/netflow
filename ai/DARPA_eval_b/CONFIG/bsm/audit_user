@@ -1,8 +1,0 @@
-#
-# User Level Audit User File
-#
-# File Format
-#
-#	username:always:never
-#
-#root:no:all
